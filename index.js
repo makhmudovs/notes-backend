@@ -15,6 +15,8 @@ const errorHandler = (err, req, res, next) => {
 
   if (err.name === "CastError") {
     return res.status(400).send({ error: "malformed id" });
+  } else if (err.name === "ValidationError") {
+    return res.status(400).send({ error: err.message });
   }
 
   next(err);
@@ -32,23 +34,21 @@ const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
 };
 
-app.post("/api/notes", (req, res) => {
-  const { content, important } = req.body;
-
-  if (!content || content === undefined) {
-    return res.status(400).json({
-      error: "content missing",
-    });
-  }
+//post new note
+app.post("/api/notes", (req, res, next) => {
+  const body = req.body;
 
   const note = new Note({
-    content: content,
-    important: important || false,
+    content: body.content,
+    important: body.important || false,
   });
 
-  note.save().then((savedNote) => {
-    res.json(savedNote);
-  });
+  note
+    .save()
+    .then((savedNote) => {
+      res.json(savedNote);
+    })
+    .catch((err) => next(err));
 });
 
 app.get("/api/notes/:id", (req, res, next) => {
@@ -71,14 +71,18 @@ app.delete("/api/notes/:id", (req, res, next) => {
     .catch((err) => next(err));
 });
 
+//update a note
 app.put("/api/notes/:id", (req, res, next) => {
-  const body = req.body;
+  const { content, important } = req.body;
 
-  const note = {
-    content: body.content,
-    important: body.important,
-  };
-  Note.findByIdAndUpdate(req.params.id, note, { new: true })
+  Note.findByIdAndUpdate(
+    req.params.id,
+    {
+      content,
+      important,
+    },
+    { new: true, runValidators: true, context: "query" }
+  )
     .then((updatedNote) => {
       res.json(updatedNote);
     })
@@ -95,7 +99,9 @@ app.get("/api/notes", (req, res) => {
   });
 });
 
-
+app.use((req, res, next) => {
+  res.status(404).json({ error: "Route not found" });
+});
 
 app.use(unknownEndpoint);
 app.use(requestLogger);
