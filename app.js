@@ -1,4 +1,5 @@
 const express = require('express');
+require('express-async-errors');
 const app = express();
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -7,6 +8,7 @@ const logger = require('./utils/logger');
 const middleware = require('./middleware/middleware');
 
 const notesRouter = require('./controllers/notes');
+const userRoutes = require('./controllers/users');
 
 mongoose.set('strictQuery', false);
 logger.info('connecting to', config.MONGODB_URI);
@@ -26,6 +28,7 @@ app.use(middleware.requestLogger);
 
 //routes
 app.use('/api/notes', notesRouter);
+app.use('/api/users', userRoutes);
 
 
 app.use(middleware.unknownEndpoint);
