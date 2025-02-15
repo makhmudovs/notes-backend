@@ -9,6 +9,7 @@ const middleware = require('./middleware/middleware');
 
 const notesRouter = require('./controllers/notes');
 const userRoutes = require('./controllers/users');
+const loginRoutes = require('./controllers/login');
 
 mongoose.set('strictQuery', false);
 logger.info('connecting to', config.MONGODB_URI);
@@ -29,6 +30,7 @@ app.use(middleware.requestLogger);
 //routes
 app.use('/api/notes', notesRouter);
 app.use('/api/users', userRoutes);
+app.use('/api/login', loginRoutes);
 
 
 app.use(middleware.unknownEndpoint);
